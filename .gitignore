@@ -1,0 +1,8 @@
+# From linter
+.ccls-cache
+
+# From neovim
+Session.vim
+
+# Build files
+build/*
