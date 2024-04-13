@@ -75,8 +75,9 @@ struct {
   struct xdg_surface_listener xsrf_list;/* LISTENER: xdg surface */
   struct xdg_toplevel* top;             /* XDG controller for window type */
   struct xdg_toplevel_listener top_list;/* LISTENER: toplevel */
-  u8* pixels;                            /* The pointer to the buff's mem */
+  u8* pixels;                           /* The pointer to the buff's mem */
   u16 width, height;                    /* The dimensions of the window */
+  bool running;                         /* If the window has been closed, 0 */
 } state;
 
 /* Entry point */
@@ -91,6 +92,7 @@ int main(void) {
   state.top_list.close = top_close;
   state.sh_list.ping = sh_ping;
   state.cb_list.done = frame_new;
+  state.running = true;
 
   /* Get display and registry */
   state.disp = wl_display_connect(NULL);
@@ -117,7 +119,9 @@ int main(void) {
   wl_surface_commit(state.surf);
 
   /* Main loop */
-  while (wl_display_dispatch(state.disp));
+  while (state.running) {
+    wl_display_dispatch(state.disp);
+  }
 
   /* Terminate */
   if (state.buff)
@@ -256,6 +260,7 @@ void top_conf(
 }
 /* XDG toplevel close */
 void top_close(void* data, struct xdg_toplevel* top) {
+  state.running = false;
   (void)data;
   (void)top;
 }

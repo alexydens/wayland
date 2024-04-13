@@ -16,6 +16,9 @@ typedef signed long long    i64;
 /* Floating-Point Numbers */
 typedef float               f32;
 typedef double              f64;
+/* Booleans */
+typedef _Bool bool;
+enum { false, true };
 
 /* Consts */
 #define C_PI                3.141592653       /* Mathematical constant PI */
