@@ -269,8 +269,8 @@ void sh_ping(void* data, struct xdg_wm_base* sh, u32 ser) {
 void draw(state_t* state) {
   for (u16 y = 0; y < state->height; y++)
     for (u16 x = 0; x < state->width; x++)
-      putpixel(state, x, y, 0xff000000);
-  for (u16 i = 0; i < 100; i++)
+      putpixel(state, x, y, 0xff123456);
+  for (u16 i = 0; i < MIN(state->width, state->height); i++)
     putpixel(state, i, i, 0xff00ff00);
   wl_surface_attach(state->surf, state->buff, 0, 0);
   wl_surface_damage(state->surf, 0, 0, state->width, state->height);
