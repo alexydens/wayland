@@ -22,11 +22,11 @@ $(SRC_DIR)/xdg-shell-client-protocol.h:
 
 # Main test binary
 $(BUILD_DIR)/main: $(SRC_DIR)/main.c $(XDG_ITEMS)
-	$(CC) $(CFLAGS) $(SRC_DIR)/* -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(SRC_DIR)/*.c -o $@ $(LDFLAGS)
 
 # Debug test binary
 $(BUILD_DIR)/main_debug: $(SRC_DIR)/main.c $(XDG_ITEMS)
-	$(CC) $(CFLAGS) $(SRC_DIR)/* -o $@ $(LDFLAGS) -ggdb
+	$(CC) $(CFLAGS) $(SRC_DIR)/*.c -o $@ $(LDFLAGS) -ggdb
 
 # Phony rules
 .PHONY: clean test debug
