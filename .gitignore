@@ -6,3 +6,6 @@ Session.vim
 
 # Build files
 build/*
+
+# Generated XDG files
+src/xdg-*
