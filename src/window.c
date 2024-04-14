@@ -36,6 +36,10 @@ typedef struct {
   struct xdg_surface_listener xsrf_list;/* LISTENER: xdg surface */
   struct xdg_toplevel* top;             /* XDG controller for window type */
   struct xdg_toplevel_listener top_list;/* LISTENER: toplevel */
+  struct wl_seat* seat;                 /* For user input */
+  struct wl_seat_listener seat_list;    /* LISTENER: for seat */
+  struct wl_keyboard* keyboard;         /* For user input */
+  struct wl_keyboard_listener kb_list;  /* LISTENER: for keyboard */
   u8* pixels;                           /* The pointer to the buff's mem */
   u16 width, height;                    /* The dimensions of the window */
   bool running;                         /* If the window has been closed, 0 */
@@ -75,6 +79,59 @@ void _top_conf(
 void _top_close(void* data, struct xdg_toplevel* top);
 /* Ping for XDG base */
 void _sh_ping(void* data, struct xdg_wm_base* sh, u32 ser);
+/* Seat capabilities */
+void _seat_cap(void* data, struct wl_seat* seat, u32 cap);
+/* Seat name */
+void _seat_name(void* data, struct wl_seat* seat, const char* name);
+/* Keyboard map */
+void _kb_map(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 fmt,
+    i32 fd,
+    u32 size
+);
+/* Keyboard enter */
+void _kb_enter(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    struct wl_surface* surf,
+    struct wl_array* keys
+);
+/* Keyboard leave */
+void _kb_leave(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    struct wl_surface* surf
+);
+/* Keyboard key */
+void _kb_key(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    u32 time,
+    u32 key,
+    u32 state
+);
+/* Keyboard modifiers */
+void _kb_mods(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    u32 mods_dep,
+    u32 mods_latch,
+    u32 mods_lock,
+    u32 group
+);
+/* Keyboard repeat info */
+void _kb_repeat_info(
+    void* data,
+    struct wl_keyboard* kb,
+    i32 rate,
+    i32 delay
+);
 /* Draw screen */
 void _draw(state_t* state);
 
@@ -92,6 +149,14 @@ window_handle_t create_window(void) {
   state->top_list.close = _top_close;
   state->sh_list.ping = _sh_ping;
   state->cb_list.done = _frame_new;
+  state->seat_list.capabilities= _seat_cap;
+  state->seat_list.name = _seat_name;
+  state->kb_list.enter = _kb_enter;
+  state->kb_list.leave = _kb_leave;
+  state->kb_list.repeat_info = _kb_repeat_info;
+  state->kb_list.keymap = _kb_map;
+  state->kb_list.key = _kb_key;
+  state->kb_list.modifiers = _kb_mods;
   state->running = true;
 
   /* Get display and registry */
@@ -121,8 +186,11 @@ window_handle_t create_window(void) {
 /* Destroy window */
 void destroy_window(window_handle_t window) {
   state_t* state = (state_t*)window;
-  if (state->buff)
-    wl_buffer_destroy(state->buff);   /* Destroy shared memory buffer */
+  wl_seat_release(state->seat);       /* We don't need the seat anymore */
+  if (state->keyboard)                /* Destroy keyboard */
+    wl_keyboard_destroy(state->keyboard);
+  if (state->buff)                    /* Destroy shared memory buffer */
+    wl_buffer_destroy(state->buff);
   xdg_toplevel_destroy(state->top);   /* Destroy toplevel */
   xdg_surface_destroy(state->xsrf);   /* Destroy XDG surface */
   wl_surface_destroy(state->surf);    /* Destroy surface */
@@ -190,6 +258,15 @@ void _reg_glob(
     /* Add XDG base listener */
     xdg_wm_base_add_listener(state->sh, &state->sh_list, state);
     printf("INFO: Found XDG WM base.\n");
+  }
+  else if (strcmp(intf, wl_seat_interface.name) == 0) {
+    state->seat = wl_registry_bind(
+        reg, name,
+        &wl_seat_interface,
+        1
+    );
+    wl_seat_add_listener(state->seat, &state->seat_list, state);
+    printf("INFO: Found seat.\n");
   }
   (void)v;
 }
@@ -289,6 +366,112 @@ void _top_close(void* data, struct xdg_toplevel* top) {
 void _sh_ping(void* data, struct xdg_wm_base* sh, u32 ser) {
   xdg_wm_base_pong(sh, ser);
   (void)data;
+}
+/* Seat capabilities */
+void _seat_cap(void* data, struct wl_seat* seat, u32 cap) {
+  state_t* state = (state_t*)data;
+  if (cap & WL_SEAT_CAPABILITY_KEYBOARD && !state->keyboard) {
+		state->keyboard = wl_seat_get_keyboard(seat);
+		wl_keyboard_add_listener(state->keyboard, &state->kb_list, state);
+	}
+}
+/* Seat name */
+void _seat_name(void* data, struct wl_seat* seat, const char* name) {
+  (void)data;
+  (void)seat;
+  (void)name;
+}
+/* Keyboard map */
+void _kb_map(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 fmt,
+    i32 fd,
+    u32 size
+) {
+  (void)data;
+  (void)kb;
+  (void)fmt;
+  (void)fd;
+  (void)size;
+}
+/* Keyboard enter */
+void _kb_enter(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    struct wl_surface* surf,
+    struct wl_array* keys
+) {
+  (void)data;
+  (void)kb;
+  (void)ser;
+  (void)surf;
+  (void)keys;
+}
+/* Keyboard leave */
+void _kb_leave(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    struct wl_surface* surf
+) {
+  (void)data;
+  (void)kb;
+  (void)ser;
+  (void)surf;
+}
+/* Keyboard key */
+void _kb_key(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    u32 time,
+    u32 key,
+    u32 state
+) {
+  printf(
+      "KEY EVENT: { key = %u, state = %s, time = %u }\n",
+      key,
+      state ? "down" : "up",
+      time
+  );
+  (void)data;
+  (void)kb;
+  (void)ser;
+  (void)time;
+  (void)key;
+  (void)state;
+}
+/* Keyboard modifiers */
+void _kb_mods(
+    void* data,
+    struct wl_keyboard* kb,
+    u32 ser,
+    u32 mods_dep,
+    u32 mods_latch,
+    u32 mods_lock,
+    u32 group
+) {
+  (void)data;
+  (void)kb;
+  (void)ser;
+  (void)mods_dep;
+  (void)mods_latch;
+  (void)mods_lock;
+  (void)group;
+}
+/* Keyboard repeat info */
+void _kb_repeat_info(
+    void* data,
+    struct wl_keyboard* kb,
+    i32 rate,
+    i32 delay
+) {
+  (void)data;
+  (void)kb;
+  (void)rate;
+  (void)delay;
 }
 /* Draw screen */
 void _draw(state_t* state) {
