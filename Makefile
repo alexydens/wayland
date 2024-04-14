@@ -4,7 +4,8 @@ SRC_DIR=src
 
 # Flags for compiler and linker
 CFLAGS = -std=c99 -Wall -Wextra
-LDFLAGS = -O3 -ffast-math -lwayland-client
+LDFLAGS = -O1 -ffast-math
+LDFLAGS += -lwayland-client
 
 # For XDG
 XDG_ITEMS = $(SRC_DIR)/xdg-shell-protocol.c
